@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B2340"><title>Elige tus carajos</title>
+<style>
+:root{--ink:#1B2340;--bg:#EEF1F7;--card:#fff;--pink:#E8336D;--gold:#FFC53D;--teal:#13A38F;--mute:#8A91A8;--line:#D3D8E6}
+@media(prefers-color-scheme:dark){:root{--ink:#F1F3FA;--bg:#12172B;--card:#1D2442;--mute:#9AA2BE;--line:#303963}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow:hidden}
+.scroll{flex:1;overflow-y:auto;padding:20px 22px 40px}
+h1{font-size:34px;line-height:1.02;letter-spacing:-1.2px;margin:6px 0 6px;font-weight:900}
+h2{font-size:26px;line-height:1.1;letter-spacing:-.6px;margin:0 0 10px;font-weight:800}
+p{margin:0}.mute{color:var(--mute);font-size:15px;line-height:1.4}
+.stats{display:flex;gap:10px;margin:18px 0 8px}
+.stat{flex:1;background:var(--card);border-radius:14px;padding:10px 12px;border:2px solid var(--line)}
+.stat b{display:block;font-size:22px;letter-spacing:-.5px}.stat span{font-size:12px;color:var(--mute)}
+.map{position:relative;margin-top:14px;display:flex;flex-direction:column;align-items:center}
+.node{display:flex;flex-direction:column;align-items:center;position:relative;padding-bottom:28px;border:0;background:none;color:inherit;font:inherit}
+.node:not(:last-child)::after{content:"";position:absolute;top:70px;bottom:2px;left:50%;border-left:3px dotted var(--line)}
+.dot{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:900;background:var(--pink);color:#fff;box-shadow:0 6px 0 #A81F4D;transition:transform .12s}
+.node:active .dot{transform:translateY(4px);box-shadow:0 2px 0 #A81F4D}
+.node.done .dot{background:var(--teal);box-shadow:0 6px 0 #0B7365}
+.node.lock .dot{background:var(--line);color:var(--mute);box-shadow:0 6px 0 var(--mute);font-size:22px}
+.node .nm{margin-top:12px;font-weight:700;font-size:14px;max-width:150px;text-align:center;line-height:1.2}
+.node .st{font-size:13px;letter-spacing:2px;color:var(--gold);min-height:16px}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:inherit;font-size:17px;font-weight:800;background:var(--pink);color:#fff;box-shadow:0 5px 0 #A81F4D;margin-top:14px}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #A81F4D}
+.btn.alt{background:var(--card);color:var(--ink);box-shadow:0 5px 0 var(--line);border:2px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:14px 18px 6px}
+.x{border:0;background:none;color:var(--mute);font-size:26px;padding:0 4px}
+.bar{flex:1;display:flex;gap:4px}.bar i{flex:1;height:8px;border-radius:4px;background:var(--line)}.bar i.on{background:var(--teal)}
+.lives{display:flex;gap:5px}.coin{width:20px;height:20px;border-radius:50%;background:var(--gold);box-shadow:inset 0 0 0 4px #E0A41A}.coin.off{background:var(--line);box-shadow:none}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.body{flex:1;display:flex;flex-direction:column;padding:10px 22px 22px;overflow-y:auto}
+.big{font-size:25px;line-height:1.28;font-weight:700;letter-spacing:-.4px;margin:auto 0}
+.tag{font-size:14px;color:var(--pink);font-weight:800;margin-bottom:10px}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:15px 16px;font:inherit;font-size:16.5px;font-weight:600;margin-top:10px;line-height:1.3}
+.opt.ok{border-color:var(--teal);background:rgba(19,163,143,.16)}.opt.no{border-color:var(--pink);background:rgba(232,51,109,.14)}
+.fb{margin-top:14px;padding:14px;border-radius:14px;font-size:15px;line-height:1.4;background:var(--card);border-left:6px solid var(--teal)}
+.fb.bad{border-color:var(--pink)}
+.sheet{position:fixed;inset:0;background:rgba(10,14,30,.55);display:flex;align-items:flex-end}
+.sheet>div{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:24px 22px calc(22px + env(safe-area-inset-bottom));animation:up .22s}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.res{text-align:center;margin:auto 0}.stars{font-size:52px;letter-spacing:6px;color:var(--gold)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+</style></head><body><div id="app"></div>
+<script>
+const C=[
+{t:"No lo intentes",d:"Menos positividad forzada y más foco en lo que importa.",
+L:["Obsesionarte con sentirte siempre bien te deja peor: querer más positividad es, en sí, una carencia.","Aceptar lo negativo es lo que de verdad abre la puerta a algo mejor.","Tu atención es limitada: tienes pocos carajos que dar. Elige con cuidado en qué los gastas.","Que algo te dé igual no es apatía: es estar cómodo siendo distinto a los demás."],
+Q:[{q:"Te pones nervioso antes de hablar en público y ahora te angustia estar tan nervioso. ¿Qué es esto?",o:["El círculo vicioso del sobreanálisis","Falta de preparación","Una señal de que no debes hablar"],e:"Es sentirte mal por sentirte mal. Se corta aceptando la emoción sin juzgarla."},
+{q:"¿Qué significa “no darle un carajo” en el libro?",o:["Estar cómodo con ser diferente y elegir lo que sí importa","Que nada te importe","Ser frío con la gente"],e:"No es indiferencia total: es elegir con criterio qué merece tu energía."},
+{q:"Una amiga intenta ser positiva las 24 horas y se siente peor. ¿Qué le sirve más?",o:["Aceptar que sentir cosas negativas es normal","Forzar aún más la sonrisa","Ocultar lo que siente"],e:"Pelear contra lo negativo lo agranda. Aceptarlo le quita fuerza."}]},
+{t:"La felicidad es un problema",d:"Los problemas no se acaban: se eligen.",
+L:["La felicidad viene de resolver problemas, no de no tenerlos.","Los problemas no desaparecen: se cambian por otros mejores.","Las emociones son señales útiles, no órdenes. Sentir algo no lo vuelve verdad.","La pregunta clave: ¿qué dolor estás dispuesto a soportar por lo que quieres?"],
+Q:[{q:"Resuelves un gran problema de tu vida. ¿Qué pasa después?",o:["Aparece otro; lo importante es tener problemas que valgan la pena","Ya no tendrás problemas","Serás feliz para siempre"],e:"Siempre habrá problemas. Lo que cambia es su calidad."},
+{q:"Sientes una pereza enorme de ir a entrenar. ¿Qué es esa emoción?",o:["Retroalimentación: información útil, no una orden","Una orden que debes obedecer","Prueba de que no lo quieres"],e:"Las emociones informan, pero tú decides qué hacer con ellas."},
+{q:"¿Qué pregunta te ayuda a escoger tus luchas?",o:["¿Qué sacrificio acepto por esto?","¿Cómo evito todo dolor?","¿Qué hacen los demás?"],e:"Toda meta valiosa trae un costo. Elige el que sí quieres pagar."}]},
+{t:"Tú no eres especial",d:"Casi todos somos promedio, y no pasa nada.",
+L:["Si crees que mereces un trato especial, cualquier crítica te rompe.","Dos caras del mismo error: presumir de genial o sentirte la víctima más única.","La mayoría somos promedio en casi todo. Serlo no es una tragedia.","Lo valioso es esforzarte en lo que importa sin necesitar ser extraordinario."],
+Q:[{q:"Un compañero se cree un genio y se derrumba ante una crítica. ¿Qué ilustra?",o:["Que necesita ser especial para sentirse bien","Alta autoestima real","Falta de talento"],e:"La autoestima frágil depende de sentirse superior."},
+{q:"Alguien repite que nadie sufre tanto como él. ¿Qué tienen en común con el arrogante?",o:["Ambos se creen especiales","Nada en absoluto","Ambos son humildes"],e:"Creer que tu dolor es único también es una forma de excepcionalismo."},
+{q:"Descubres que eres promedio cantando. ¿Qué actitud sugiere el libro?",o:["Disfrutarlo igual: el valor está en el esfuerzo","Rendirte","Fingir que tienes talento"],e:"No necesitas ser extraordinario para que valga la pena."}]},
+{t:"El valor del sufrimiento",d:"El dolor es inevitable: elige por qué sufrir.",
+L:["Sufrir es parte de la vida. Lo que eliges es por qué te vale la pena.","Tus valores deciden qué problemas tienes. Los valores mediocres dan problemas vacíos.","Un buen valor se basa en la realidad, ayuda a otros y depende de ti ahora.","El soldado Onoda siguió su guerra décadas después de que terminó. Revisa a qué le entregas tu vida."],
+Q:[{q:"¿Cuál de estos es un buen valor según el libro?",o:["La honestidad","Caerle bien a todos","Sentirse bien siempre"],e:"La honestidad depende de ti, refleja la realidad y beneficia a otros."},
+{q:"Tu valor es ser popular. ¿Por qué es débil?",o:["Depende de otros y no lo controlas","Es inmoral","Es demasiado fácil"],e:"Un buen valor es inmediato y controlable. La popularidad no lo es."},
+{q:"Tu meta es “sentirme bien todo el tiempo”. ¿Qué pasa?",o:["Es un mal valor: depende de lo externo y frustra","Te vuelve resiliente","Te hace sabio"],e:"Las emociones cambian solas. Una meta así te condena a perseguirlas."}]},
+{t:"Siempre decides algo",d:"Culpa no siempre, responsabilidad sí.",
+L:["Siempre eliges cómo interpretas y respondes a lo que pasa.","Culpa es por lo que ocurrió. Responsabilidad es lo que haces con eso.","No elegiste tu genética ni tus cartas, pero sí cómo jugarlas.","El victimismo de moda regala atención, pero te quita poder."],
+Q:[{q:"Te despidieron injustamente. ¿Qué distingue culpa de responsabilidad?",o:["No fue tu culpa, pero decidir qué haces ahora sí es tu responsabilidad","Nada: son lo mismo","Siempre fue tu culpa"],e:"No controlas lo que pasa, sí tu respuesta."},
+{q:"Alguien usa su mala suerte para no intentar nada. ¿Qué es?",o:["Victimismo: cede el poder de actuar","Realismo","Humildad"],e:"Culpar siempre al exterior te deja sin margen para mejorar."},
+{q:"Naciste con una limitación que no puedes cambiar. ¿Qué enfoque propone el libro?",o:["Jugar tus cartas eligiendo cómo responder","Ignorarla","Envidiar a otros"],e:"Las cartas vienen dadas. El juego lo decides tú."}]},
+{t:"Te equivocas respecto a todo",d:"Duda un poco de ti para crecer.",
+L:["Todos nos equivocamos: avanzamos cambiando un error por uno menos malo.","La certeza total cierra la mente.","Ley de la Evasión: cuanto más algo amenaza tu identidad, más lo evitas.","Pregúntate: ¿y si estoy equivocado? ¿Qué significaría eso?"],
+Q:[{q:"Evitas pedir feedback porque amenaza tu imagen de “buen líder”. ¿Qué ley aplica?",o:["La Ley Manson de la Evasión","La ley del mínimo esfuerzo","La ley de la certeza"],e:"Evitamos lo que cuestiona quienes creemos ser."},
+{q:"Alguien está 100% seguro y rechaza toda evidencia. ¿Cuál es el riesgo?",o:["La certeza pura frena el aprendizaje","Ninguno, es admirable","Que gane demasiado"],e:"Sin duda no hay corrección posible."},
+{q:"¿Qué pregunta ayuda a ser menos seguro de ti?",o:["¿Y si estoy equivocado?","¿Cómo demuestro que tengo razón?","¿Quién me dará la razón?"],e:"Esa duda abre la puerta a mejorar tus creencias."}]},
+{t:"El fracaso es un paso adelante",d:"Actúa primero; la motivación llega después.",
+L:["Fallar es parte de aprender: no hay éxito sin fracasos.","Mejorar es equivocarte, ajustar y repetir.","Evitar el dolor del proceso es evitar crecer.","Principio “Haz algo”: la acción produce inspiración, y esa produce motivación."],
+Q:[{q:"No tienes ganas de empezar un proyecto. ¿Qué propone el libro?",o:["Dar un primer paso mínimo y la motivación llegará","Esperar a sentirte inspirado","Pensarlo más tiempo"],e:"La acción no sigue a la motivación: la crea."},
+{q:"Fracasas en tu primer intento. ¿Cómo verlo?",o:["Como información para ajustar","Como prueba de que no sirves","Como razón para no volver a intentarlo"],e:"El fracaso es retroalimentación sobre el camino."},
+{q:"¿Qué relación hay entre dolor y progreso?",o:["El dolor es parte del proceso","El dolor indica que vas mal","Se progresa sin incomodidad"],e:"Crecer incomoda. Eso no significa que estés fallando."}]},
+{t:"La importancia de decir no",d:"Rechazar y comprometerte te libera.",
+L:["Decir no define lo que valoras: sin rechazos no hay valores claros.","Límites sanos: asumes lo tuyo y no cargas con lo ajeno.","La confianza se construye con honestidad, aunque incomode.","Comprometerte con algo te libra de la dispersión."],
+Q:[{q:"Aceptas todo para no incomodar a nadie. ¿Qué efecto tiene?",o:["Te diluyes: sin rechazos no hay valores claros","Ganas respeto","Eliminas los conflictos"],e:"Decir sí a todo es no decidir nada."},
+{q:"En una relación, uno resuelve cada problema del otro. ¿Qué falta?",o:["Límites: cada quien responde por lo suyo","Más sacrificio","Más silencio"],e:"Ayudar es sano. Rescatar siempre quita responsabilidad al otro."},
+{q:"¿Comprometerte con una sola cosa quita libertad?",o:["No: reduce distracciones y te permite profundizar","Sí, siempre","Solo si es difícil"],e:"El compromiso enfoca tu energía y te libera de opciones sin fin."}]},
+{t:"…Y después mueres",d:"Saber que morirás aclara qué importa.",
+L:["Pensar en la muerte pone en orden tus prioridades.","Mucha gente huye de esa idea y busca algo que la trascienda.","Una causa más grande que tú vale más que tu comodidad.","Tu tiempo es limitado: úsalo en lo que de verdad te importa."],
+Q:[{q:"¿Qué efecto tiene recordar que vas a morir?",o:["Aclara tus prioridades","Te vuelve fatalista","No cambia nada"],e:"Ver el final recorta lo trivial."},
+{q:"¿Qué tipo de proyecto da sentido duradero?",o:["Algo más grande que tú","Acumular comodidades","Evitar el esfuerzo"],e:"Lo que trasciende al yo da sentido más allá de uno mismo."},
+{q:"Si tuvieras que resumir el libro en una idea:",o:["Elige con cuidado qué cosas te importan","Piensa positivo siempre","Evita todo problema"],e:"Tu atención es el recurso escaso. Gástala con criterio."}]}];
+const $=s=>document.querySelector(s),A=$('#app');
+let S={done:{},xp:0,streak:0,last:""};
+try{Object.assign(S,JSON.parse(localStorage.getItem('cj')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('cj',JSON.stringify(S))}catch(e){}};
+const vib=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
+const day=()=>new Date().toISOString().slice(0,10);
+const sh=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+const unlocked=i=>i==0||S.done[i-1]!=null;
+const stars=n=>"★".repeat(n)+"☆".repeat(3-n);
+const total=()=>Object.values(S.done).reduce((a,b)=>a+b,0);
+const off=[0,56,18,-48,-16,50,8,-56,0];
+function home(){
+A.innerHTML=`<div class="scroll"><h1>Elige tus carajos</h1><p class="mute">Aprende las ideas del libro jugando. Cada capítulo es un nivel.</p>
+<div class="stats"><div class="stat"><b>${S.xp}</b><span>XP</span></div><div class="stat"><b>${total()}/27</b><span>estrellas</span></div><div class="stat"><b>${S.streak}</b><span>días seguidos</span></div></div>
+<div class="map">${C.map((c,i)=>{const u=unlocked(i),d=S.done[i]!=null;return `<button class="node ${d?'done':u?'':'lock'}" style="transform:translateX(${off[i]}px)" data-i="${i}" ${u?'':'disabled'}><span class="dot">${u?i+1:'🔒'}</span><span class="nm">${c.t}</span><span class="st">${d?stars(S.done[i]):''}</span></button>`}).join('')}</div>
+${Object.keys(S.done).length?'<button class="btn alt" id="rep">Repaso rápido (5 preguntas)</button>':''}</div>`;
+A.querySelectorAll('.node').forEach(n=>n.onclick=()=>sheet(+n.dataset.i));
+const r=$('#rep');if(r)r.onclick=repaso;}
+function sheet(i){const c=C[i],el=document.createElement('div');el.className='sheet';
+el.innerHTML=`<div><div class="tag">Capítulo ${i+1}</div><h2>${c.t}</h2><p class="mute">${c.d}</p><button class="btn" id="go">${S.done[i]!=null?'Jugar de nuevo':'Empezar'}</button><button class="btn alt" id="cl">Cerrar</button></div>`;
+el.onclick=e=>{if(e.target==el)el.remove()};document.body.appendChild(el);
+$('#cl').onclick=()=>el.remove();$('#go').onclick=()=>{el.remove();lesson(i,0)};}
+function topbar(p,n,lives){return `<div class="top"><button class="x" id="x" aria-label="Salir">✕</button><div class="bar">${Array.from({length:n},(_,k)=>`<i class="${k<p?'on':''}"></i>`).join('')}</div>${lives==null?'':`<div class="lives">${[0,1,2].map(k=>`<span class="coin ${k<lives?'':'off'}"></span>`).join('')}</div>`}</div>`}
+function lesson(i,k){const c=C[i],n=c.L.length+c.Q.length;
+A.innerHTML=topbar(k,n)+`<div class="body"><div class="tag">Capítulo ${i+1} · ${c.t}</div><p class="big">${c.L[k]}</p><button class="btn" id="nx">${k<c.L.length-1?'Siguiente':'Ir al reto'}</button></div>`;
+$('#x').onclick=home;$('#nx').onclick=()=>k<c.L.length-1?lesson(i,k+1):quiz({qs:sh(c.Q).map(mk),i,k:0,lives:3,err:0,off:c.L.length,n});}
+const mk=q=>({...q,o:sh(q.o.map((t,j)=>({t,ok:j==0})))});
+function quiz(g){const q=g.qs[g.k];
+A.innerHTML=topbar(g.off+g.k,g.n,g.lives)+`<div class="body"><div class="tag">${g.i==null?'Repaso':'Reto '+(g.k+1)+' de '+g.qs.length}</div><p class="big" style="margin:0 0 6px">${q.q}</p><div id="os">${q.o.map((o,j)=>`<button class="opt" data-j="${j}">${o.t}</button>`).join('')}</div><div id="fb"></div></div>`;
+$('#x').onclick=home;let done=false;
+A.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(done)return;done=true;const o=q.o[+b.dataset.j];
+A.querySelectorAll('.opt').forEach((x,j)=>{if(q.o[j].ok)x.classList.add('ok')});
+if(!o.ok){b.classList.add('no','shake');g.lives--;g.err++;vib(120);const l=A.querySelector('.lives');if(l){l.innerHTML=[0,1,2].map(k=>`<span class="coin ${k<g.lives?'':'off'}"></span>`).join('');l.classList.add('shake')}}else{vib(25);S.xp+=10}
+const last=g.lives<=0||g.k==g.qs.length-1;
+$('#fb').innerHTML=`<div class="fb ${o.ok?'':'bad'}"><b>${o.ok?'¡Correcto!':'Casi.'}</b> ${q.e}</div><button class="btn" id="c">${g.lives<=0?'Ver resultado':last?'Terminar':'Continuar'}</button>`;
+$('#c').onclick=()=>last?end(g):(g.k++,quiz(g));$('#c').scrollIntoView();save();});}
+function end(g){const win=g.lives>0,st=win?Math.max(1,3-g.err):0;
+if(win){if(g.i!=null){if((S.done[g.i]||0)<st)S.done[g.i]=st;S.xp+=20}
+const t=day();if(S.last!=t){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);S.streak=S.last==y?S.streak+1:1;S.last=t}save()}
+A.innerHTML=`<div class="body"><div class="res"><div class="stars">${win?stars(st):'☆☆☆'}</div><h2 style="margin-top:14px">${win?(g.i==null?'¡Repaso completado!':'¡Capítulo superado!'):'Te quedaste sin carajos'}</h2><p class="mute">${win?'Cada error resta una estrella. Repite para perfeccionarlo.':'Releer las ideas ayuda. Inténtalo otra vez.'}</p></div>
+${win&&g.i!=null&&g.i<8?`<button class="btn" id="nx">Siguiente capítulo</button>`:''}<button class="btn ${win&&g.i!=null&&g.i<8?'alt':''}" id="re">${win?'Volver al mapa':'Reintentar'}</button></div>`;
+const nx=$('#nx');if(nx)nx.onclick=()=>lesson(g.i+1,0);
+$('#re').onclick=()=>win?home():(g.i==null?repaso():lesson(g.i,0));vib(win?[40,40,40]:200);}
+function repaso(){const pool=[];Object.keys(S.done).forEach(i=>C[i].Q.forEach(q=>pool.push(q)));
+const qs=sh(pool).slice(0,5).map(mk);quiz({qs,i:null,k:0,lives:3,err:0,off:0,n:qs.length});}
+home();
+</script></body></html>
